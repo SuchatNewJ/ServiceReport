@@ -387,8 +387,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
       <option value="wait">รอสั่งอุปกรณ์</option>
       <option value="fail">แก้ไขไม่ได้</option>
     </select>
-    <button class="sbtn" onclick="loadHistory()" style="white-space:nowrap">🔄 โหลดข้อมูล</button>
+    <button class="sbtn" onclick="loadHistory()" style="white-space:nowrap">🔄 โหลด</button>
   </div>
+
+  <!-- SYNC BAR -->
+  <div id="histSyncBar" style="display:none;background:#fef9e7;border:1px solid #f0d060;border-radius:8px;padding:12px 16px;margin-bottom:1rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:13px;flex:1">📋 มีข้อมูล <strong id="localCount">0</strong> รายการใน Local — ยังไม่ได้ส่งขึ้น Google Sheets</span>
+    <button onclick="syncAllToSheets()" style="padding:8px 18px;background:var(--red);color:#fff;border:none;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">☁️ Sync ขึ้น Google Sheets</button>
+  </div>
+  <div id="histSyncResult" style="margin-bottom:1rem"></div>
   <div id="histList"></div>
 </div>
 
@@ -398,19 +405,39 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
   <div class="card">
     <div class="card-head"><span class="num" style="background:#555;font-size:9px">GS</span> Google Sheets — Apps Script</div>
     <div class="card-body">
-      <div class="fg">
-        <label>Google Apps Script URL (Web App)</label>
-        <input type="text" id="s_url" class="mono" placeholder="https://script.google.com/macros/s/.../exec">
-        <span class="help">Deploy Apps Script ก่อน แล้ว copy URL มาวาง</span>
+      <div class="grid2">
+        <div class="fg">
+          <label>Google Apps Script URL (Web App)</label>
+          <input type="text" id="s_url" class="mono" placeholder="https://script.google.com/macros/s/.../exec">
+          <span class="help">Deploy Apps Script ก่อน แล้ว copy URL มาวาง</span>
+        </div>
+        <div class="fg">
+          <label>ชื่อ Tab ใน Google Sheets</label>
+          <input type="text" id="s_sheetName" placeholder="Reports" value="Reports">
+          <span class="help">ตรงกับชื่อ Tab ใน Sheets ของคุณ</span>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="hbtn red" onclick="saveSettings()" style="font-size:13px">💾 บันทึก</button>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="hbtn red" onclick="saveSettings()" style="font-size:13px">💾 บันทึกการตั้งค่า</button>
         <button class="sbtn" onclick="testConn()">🧪 ทดสอบการเชื่อมต่อ</button>
       </div>
       <details style="margin-top:16px">
         <summary style="cursor:pointer;font-size:13px;font-weight:700;padding:6px 0">📄 Code.gs ที่ต้องนำไปวางใน Google Apps Script (คลิกเพื่อดู)</summary>
         <pre id="codeBox" style="margin-top:10px;background:#1a1a1a;color:#a8d8a8;padding:1rem;border-radius:6px;overflow-x:auto;font-size:11px;line-height:1.7;white-space:pre-wrap;font-family:'IBM Plex Mono',monospace"></pre>
       </details>
+    </div>
+  </div>
+
+  <!-- DATA STATUS & SYNC -->
+  <div class="card" id="dataStatusCard">
+    <div class="card-head"><span class="num" style="background:#555;font-size:9px">DB</span> ข้อมูลในระบบ & Sync ขึ้น Google Sheets</div>
+    <div class="card-body">
+      <div id="dataStatusBox" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="hbtn red" onclick="syncAllToSheets()" id="syncBtn" style="font-size:13px">☁️ Sync ข้อมูล Local → Google Sheets</button>
+        <button class="sbtn" onclick="refreshDataStatus()">🔄 รีเฟรชสถานะ</button>
+      </div>
+      <div id="syncResult" style="margin-top:10px;font-size:13px"></div>
     </div>
   </div>
 
@@ -482,8 +509,9 @@ const GAS_CODE = `// ============================================
 // 2. Deploy > New Deployment > Web App
 //    Execute as: Me | Who has access: Anyone
 // 3. Copy URL มาวางในตั้งค่าของแอป
+// ⚠️ SHEET_NAME ต้องตรงกับชื่อ Tab ใน Google Sheets
 // ============================================
-const SHEET_NAME = 'ServiceReports';
+const SHEET_NAME = 'Reports'; // ← เปลี่ยนให้ตรงกับชื่อ Tab ของคุณ
 
 function doGet(e) {
   const action = e.parameter.action || '';
@@ -507,11 +535,13 @@ function doGet(e) {
 function doPost(e) {
   const p = JSON.parse(e.postData.contents);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  // รับชื่อ Sheet จาก request หรือใช้ค่า default
+  const sheetName = p.sheetName || SHEET_NAME;
 
   if (p.action === 'save') {
-    let sh = ss.getSheetByName(SHEET_NAME);
+    let sh = ss.getSheetByName(sheetName);
     if (!sh) {
-      sh = ss.insertSheet(SHEET_NAME);
+      sh = ss.insertSheet(sheetName);
       sh.appendRow(['id','date','reportNo','customer','contact','serviceTypes',
         'equipment','symptom','cause','fix','parts',
         'status','reason','workers','timeAmt','timeUnit','note','savedAt']);
@@ -540,7 +570,7 @@ function doPost(e) {
   }
 
   if (p.action === 'delete') {
-    const sh = ss.getSheetByName(SHEET_NAME);
+    const sh = ss.getSheetByName(sheetName);
     if (!sh) return ok({});
     const vals = sh.getDataRange().getValues();
     for (let i = 1; i < vals.length; i++) {
@@ -571,11 +601,13 @@ function init() {
 
   document.getElementById('codeBox').textContent = GAS_CODE;
   document.getElementById('s_url').value = A.scriptUrl || '';
+  document.getElementById('s_sheetName').value = A.sheetName || 'Reports';
 
   renderCustDropdowns();
   renderCustTags();
   renderTmplTags();
   renderTmplDropdown();
+  refreshDataStatus();
   setTodayDate();
   autoNo();
   addERow('', '');
@@ -977,7 +1009,7 @@ async function loadHistory() {
 
   if (A.scriptUrl) {
     try {
-      const r = await fetch(A.scriptUrl + '?action=getAll');
+      const r = await fetch(A.scriptUrl + '?action=getAll&sheetName=' + encodeURIComponent(A.sheetName || 'Reports'));
       const js = await r.json();
       if (js.ok && Array.isArray(js.data) && js.data.length) {
         A.reports = js.data.map(d => ({
@@ -989,7 +1021,24 @@ async function loadHistory() {
     } catch(e){}
   }
   renderCustDropdowns();
+  updateHistSyncBar();
   renderHist(A.reports);
+}
+
+function updateHistSyncBar() {
+  const bar = document.getElementById('histSyncBar');
+  const cnt = document.getElementById('localCount');
+  if (!bar || !cnt) return;
+  const n = A.reports.length;
+  if (n > 0 && !A.scriptUrl) {
+    bar.style.display = 'flex';
+    cnt.textContent = n;
+  } else if (n > 0 && A.scriptUrl) {
+    bar.style.display = 'flex';
+    cnt.textContent = n;
+  } else {
+    bar.style.display = 'none';
+  }
 }
 
 function renderHist(reports) {
@@ -1178,13 +1227,15 @@ function buildDoc(d) {
 // =============================================
 function saveSettings() {
   A.scriptUrl = document.getElementById('s_url').value.trim();
+  A.sheetName = document.getElementById('s_sheetName').value.trim() || 'Reports';
   persist();
+  refreshDataStatus();
   toast('✅ บันทึกการตั้งค่าแล้ว');
 }
 
 async function testConn() {
   const url = document.getElementById('s_url').value.trim();
-  if (!url) { toast('กรุณากรอก Script URL ก่อน'); return; }
+  if (!url) { toast('กรุณากรอก Script URL ก่อน แล้วกด "บันทึกการตั้งค่า"'); return; }
   showSbar('กำลังทดสอบ...', 'load');
   try {
     const r = await fetch(url + '?action=ping');
@@ -1192,6 +1243,91 @@ async function testConn() {
     showSbar(js.ok ? '✅ เชื่อมต่อสำเร็จ! Sheets พร้อมใช้งาน' : '⚠️ ได้รับ Response แต่อาจมีปัญหา', js.ok?'ok':'err');
   } catch(e) {
     showSbar('❌ เชื่อมต่อไม่ได้ — ตรวจสอบ URL และการ Deploy ว่าเปิด Access: Anyone', 'err');
+  }
+}
+
+function refreshDataStatus() {
+  const local = localStorage.getItem('enzone_rpt');
+  let reports = [];
+  if (local) try { reports = JSON.parse(local); } catch(e){}
+
+  const url = A.scriptUrl || document.getElementById('s_url')?.value || '';
+  const sheetName = A.sheetName || document.getElementById('s_sheetName')?.value || 'Reports';
+
+  const urlStatus = url
+    ? `<span style="color:var(--green);font-weight:700">✅ ตั้งค่าแล้ว</span>`
+    : `<span style="color:var(--red);font-weight:700">❌ ยังไม่ได้กรอก URL</span>`;
+
+  document.getElementById('dataStatusBox').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+      <div style="background:#f4f3ef;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:28px;font-weight:900;color:var(--red)">${reports.length}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">รายงานใน Local</div>
+      </div>
+      <div style="background:#f4f3ef;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:13px;font-weight:600;margin-top:4px">${urlStatus}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Apps Script URL</div>
+      </div>
+      <div style="background:#f4f3ef;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-top:4px">${sheetName}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">ชื่อ Tab ใน Sheets</div>
+      </div>
+    </div>
+    ${reports.length > 0 ? `
+    <div style="background:#fef9e7;border:1px solid #f5e279;border-radius:6px;padding:10px 14px;font-size:13px">
+      📋 มีรายงาน <strong>${reports.length} รายการ</strong> ใน Local — กด <strong>"Sync ข้อมูล Local → Google Sheets"</strong> เพื่ออัพโหลดทั้งหมดขึ้น Sheets
+    </div>` : `
+    <div style="background:var(--green-light);border-radius:6px;padding:10px 14px;font-size:13px;color:var(--green)">
+      ✅ ไม่มีข้อมูลค้างใน Local
+    </div>`}
+  `;
+}
+
+async function syncAllToSheets() {
+  const url = A.scriptUrl;
+  if (!url) {
+    document.getElementById('syncResult').innerHTML = `<div style="color:var(--red);padding:8px;background:var(--red-light);border-radius:6px">❌ กรุณากรอก Script URL และกด "บันทึกการตั้งค่า" ก่อน</div>`;
+    return;
+  }
+  const local = localStorage.getItem('enzone_rpt');
+  let reports = [];
+  if (local) try { reports = JSON.parse(local); } catch(e){}
+  if (!reports.length) {
+    document.getElementById('syncResult').innerHTML = `<div style="color:var(--muted);padding:8px;background:#f4f3ef;border-radius:6px">ℹ️ ไม่มีข้อมูลใน Local ที่ต้อง Sync</div>`;
+    return;
+  }
+
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลัง Sync...';
+  let ok = 0, fail = 0;
+
+  for (const rep of reports) {
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', data: rep, sheetName: A.sheetName || 'Reports' })
+      });
+      const js = await r.json();
+      if (js.ok) ok++; else fail++;
+    } catch(e) {
+      fail++;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '☁️ Sync ข้อมูล Local → Google Sheets';
+
+  const okMsg = fail === 0
+    ? `<div style="color:var(--green);padding:10px;background:var(--green-light);border-radius:6px">✅ Sync สำเร็จ ${ok}/${reports.length} รายการ — ตรวจสอบใน Google Sheets ได้เลย</div>`
+    : `<div style="color:var(--orange);padding:10px;background:var(--orange-light);border-radius:6px">⚠️ สำเร็จ ${ok} รายการ / ล้มเหลว ${fail} รายการ — ตรวจสอบ Script URL และ Deploy อีกครั้ง</div>`;
+  document.getElementById('syncResult').innerHTML = okMsg;
+  // อัพเดต bar ใน history tab ด้วย
+  const histRes = document.getElementById('histSyncResult');
+  if (histRes) histRes.innerHTML = okMsg;
+  if (fail === 0) {
+    const bar = document.getElementById('histSyncBar');
+    if (bar) bar.style.display = 'none';
   }
 }
 
