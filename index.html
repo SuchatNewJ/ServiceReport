@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enzone Service — ใบรายงานการบริการ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #c0392b;
+    --red-dark: #922b21;
+    --red-light: #fadbd8;
+    --bg: #f5f4f0;
+    --card: #ffffff;
+    --border: #e0ddd6;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #1a1a1a;
+    --success: #1e8449;
+    --success-light: #d5f5e3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    background: #1a1a1a;
+    color: white;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--red);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: white; letter-spacing: -0.5px;
+  }
+  .logo-text { font-weight: 600; font-size: 15px; letter-spacing: 0.3px; }
+  .logo-sub { font-size: 11px; opacity: 0.5; }
+  .header-actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: white;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: rgba(255,255,255,0.1); }
+  .btn-red { background: var(--red); border-color: var(--red); }
+  .btn-red:hover { background: var(--red-dark); border-color: var(--red-dark); }
+  .btn-dark { background: white; color: #1a1a1a; border-color: white; }
+  .btn-dark:hover { background: #eee; }
+
+  /* ===== TABS ===== */
+  .tabs {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 2rem;
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tab.active { color: var(--red); border-bottom-color: var(--red); }
+  .tab:hover { color: var(--text); }
+
+  /* ===== MAIN ===== */
+  .main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+  /* ===== SECTIONS ===== */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ===== SHEET CONFIG ===== */
+  .config-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .config-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 1rem; }
+  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    background: white;
+    color: var(--text);
+    transition: border 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--red);
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .monospace { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+  /* ===== STATUS BAR ===== */
+  .status-bar {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .status-bar.show { display: flex; align-items: center; gap: 8px; }
+  .status-bar.ok { background: var(--success-light); color: var(--success); }
+  .status-bar.err { background: var(--red-light); color: var(--red-dark); }
+  .status-bar.loading { background: #fef9e7; color: #b7950b; }
+
+  /* ===== REPORT FORM ===== */
+  .form-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .form-card-header {
+    background: #1a1a1a;
+    color: white;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-card-header .section-num {
+    width: 22px; height: 22px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .form-card-body { padding: 1.5rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .full { grid-column: 1 / -1; }
+
+  /* ===== EQUIPMENT TABLE ===== */
+  .equip-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .equip-table th {
+    background: #f5f4f0;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .equip-table td {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .equip-table td input, .equip-table td select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    padding: 3px 4px;
+  }
+  .equip-table td input:focus, .equip-table td select:focus { outline: 1px solid var(--red); border-radius: 3px; }
+  .equip-table .btn-rm {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .equip-table .btn-rm:hover { background: var(--red-light); color: var(--red); }
+  .add-row-btn {
+    margin-top: 10px;
+    padding: 7px 14px;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    background: none;
+    color: var(--muted);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .add-row-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+  /* ===== CHECKLIST ===== */
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+  }
+  .check-item:hover { border-color: var(--red); background: var(--red-light); }
+  .check-item input[type="checkbox"] { accent-color: var(--red); width: 15px; height: 15px; }
+  .check-item.checked { border-color: var(--red); background: var(--red-light); }
+
+  /* ===== HISTORY LIST ===== */
+  .history-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .history-filters input, .history-filters select {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    background: white;
+  }
+  .history-filters input { flex: 1; min-width: 200px; }
+  .report-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .report-card:hover { border-color: #aaa; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .report-card-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    background: #1a1a1a;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .report-card-info { flex: 1; }
+  .report-card-customer { font-weight: 600; font-size: 14px; }
+  .report-card-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .report-card-service { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .report-card-actions { display: flex; gap: 6px; }
+  .btn-sm {
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: white;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .btn-sm:hover { background: #f5f4f0; }
+  .btn-sm.red { color: var(--red); border-color: var(--red-light); }
+  .btn-sm.red:hover { background: var(--red-light); }
+
+  /* ===== PRINT PREVIEW ===== */
+  .preview-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-modal.open { display: flex; }
+  .preview-content {
+    background: white;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .preview-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: white;
+  }
+  .preview-header h3 { font-size: 15px; font-weight: 600; }
+  .preview-body { padding: 2rem; }
+
+  /* ===== PRINT DOC ===== */
+  .doc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1a1a1a;
+  }
+  .doc-company { font-size: 13px; line-height: 1.6; }
+  .doc-company strong { font-size: 15px; display: block; }
+  .doc-company .red { color: var(--red); font-weight: 600; }
+  .doc-logo-box {
+    text-align: right;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .doc-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: #f5f4f0;
+    border-radius: 6px;
+  }
+  .doc-meta { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+  .doc-meta-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-meta-row:last-child { border-bottom: none; }
+  .doc-meta-label {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f5f4f0;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .doc-meta-value { padding: 8px 14px; font-size: 13px; font-weight: 500; }
+  .doc-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--red);
+    margin: 20px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--red-light);
+  }
+  .doc-equip-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .doc-equip-table th {
+    background: #1a1a1a;
+    color: white;
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .doc-equip-table td {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .doc-equip-table tr:nth-child(even) td { background: #fafafa; }
+  .doc-sig-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 40px;
+  }
+  .doc-sig-box {
+    border-top: 1px solid #1a1a1a;
+    padding-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #1a1a1a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 300;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ===== SPINNER ===== */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.15);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== PRINT ===== */
+  @media print {
+    .app-header, .tabs, .history-filters, .report-card-actions, .btn, .preview-header { display: none !important; }
+    .preview-modal { position: static; background: none; display: block; }
+    .preview-content { width: 100%; max-height: none; border-radius: 0; box-shadow: none; }
+    .preview-body { padding: 0; }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+  .empty-state svg { width: 64px; height: 64px; opacity: 0.3; margin-bottom: 1rem; }
+  .empty-state p { font-size: 15px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-green { background: var(--success-light); color: var(--success); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+
+  .help-text { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  .inline-btns { display: flex; gap: 8px; margin-top: 1rem; justify-content: flex-end; }
+
+  .required::after { content: ' *'; color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-icon">EZ</div>
+    <div>
+      <div class="logo-text">Enzone Service</div>
+      <div class="logo-sub">ระบบจัดการใบรายงานการบริการ</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="showSection('settings')">⚙ ตั้งค่า Google Sheets</button>
+    <button class="btn btn-red" onclick="newReport()">+ สร้างรายงานใหม่</button>
+  </div>
+</header>
+
+<!-- TABS -->
+<nav class="tabs">
+  <div class="tab active" onclick="showSection('form')" id="tab-form">📝 กรอกรายงาน</div>
+  <div class="tab" onclick="showSection('history')" id="tab-history">📋 ประวัติรายงาน</div>
+  <div class="tab" onclick="showSection('settings')" id="tab-settings">⚙ ตั้งค่า</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="statusBar"></div>
+
+  <!-- ============ FORM SECTION ============ -->
+  <div class="section active" id="section-form">
+
+    <!-- Card 1: ข้อมูลทั่วไป -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="section-num">1</span>
+        ข้อมูลทั่วไป (General Information)
+      </div>
+      <div class="form-card-body">
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="required">เลขที่รายงาน</label>
+            <input type="text" id="reportNo" placeholder="SR-2569-001" class="monospace">
+          </div>
+          <div class="form-group">
+            <label class="required">วันที่</label>
+            <input type="date" id="reportDate">
+          </div>
+          <div class="form-group">
+            <label>ประเภทงาน</label>
+            <select id="serviceType">
+              <option value="">-- เลือกประเภทงาน --</option>
+              <option value="ติดตั้ง, ซ่อมบำรุง, ตรวจสอบ, อื่นๆ (PM Preventive Maintenance)">PM Preventive Maintenance</option>
+              <option value="ติดตั้ง (Installation)">ติดตั้ง (Installation)</option>
+              <option value="ซ่อมบำรุง (Repair)">ซ่อมบำรุง (Repair)</option>
+              <option value="ตรวจสอบ (Inspection)">ตรวจสอบ (Inspection)</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:14px">
+          <div class="form-group">
+            <label class="required">ชื่อลูกค้า</label>
+            <select id="customerSelect" onchange="fillCustomerInfo()">
+              <option value="">-- เลือกหรือเพิ่มลูกค้าใหม่ --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>สาขา / โรงงาน</label>
+            <input type="text" id="branch" placeholder="เช่น สาขาบุรีรัมย์, มหาชน">
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:14px">
+          <div class="form-group">
+            <label>ที่อยู่สถานที่บริการ</label>
+            <input type="text" id="siteAddress" placeholder="ที่อยู่ไซต์งาน">
+          </div>
+          <div class="form-group">
+            <label>ผู้ติดต่อลูกค้า</label>
+            <input type="text" id="contactPerson" placeholder="ชื่อ-นามสกุล / โทรศัพท์">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: อุปกรณ์ -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="section-num">2</span>
+        ข้อมูลอุปกรณ์ (Equipment Details)
+        <span style="margin-left:auto; font-size:11px; opacity:0.6">โหลดจากรายการที่ใช้บ่อยหรือเพิ่มใหม่ได้</span>
+      </div>
+      <div class="form-card-body">
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <select id="templateSelect" style="padding:7px 12px; border:1px solid var(--border); border-radius:6px; font-family:'Sarabun',sans-serif; font-size:13px; background:white; flex:1; min-width:200px;">
+            <option value="">⚡ โหลดชุดอุปกรณ์ที่บันทึกไว้...</option>
+          </select>
+          <button class="btn-sm" onclick="loadEquipTemplate()" style="white-space:nowrap">โหลด</button>
+          <button class="btn-sm" onclick="addEquipRow()" style="white-space:nowrap; color:var(--red); border-color:var(--red-light)">+ เพิ่มแถว</button>
+        </div>
+        <table class="equip-table" id="equipTable">
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>รายละเอียดอุปกรณ์</th>
+              <th style="width:140px">S/N</th>
+              <th style="width:90px">สถานะ</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="equipBody">
+          </tbody>
+        </table>
+        <button class="add-row-btn" onclick="addEquipRow()">+ เพิ่มอุปกรณ์</button>
+      </div>
+    </div>
+
+    <!-- Card 3: รายการตรวจสอบ -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="section-num">3</span>
+        รายการที่ดำเนินการ (Work Performed)
+      </div>
+      <div class="form-card-body">
+        <div class="check-grid" id="checkGrid">
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label>รายละเอียดงานที่ทำเพิ่มเติม</label>
+          <textarea id="workDetail" placeholder="ระบุรายละเอียดงานที่ดำเนินการ..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: ผลการตรวจ -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="section-num">4</span>
+        ผลการตรวจสอบ & ข้อเสนอแนะ
+      </div>
+      <div class="form-card-body">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>ผลการตรวจสอบ</label>
+            <select id="inspResult">
+              <option value="ปกติ">✅ ปกติ (Normal)</option>
+              <option value="พบปัญหา">⚠️ พบปัญหา (Issues Found)</option>
+              <option value="ต้องการซ่อม">🔧 ต้องการซ่อม (Needs Repair)</option>
+              <option value="รอชิ้นส่วน">⏳ รอชิ้นส่วน (Waiting Parts)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>วันนัดครั้งต่อไป</label>
+            <input type="date" id="nextVisit">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label>ข้อเสนอแนะ / ปัญหาที่พบ</label>
+          <textarea id="recommendation" placeholder="ระบุข้อเสนอแนะหรือปัญหาที่พบ..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: ช่างและลายเซ็น -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="section-num">5</span>
+        ช่างผู้รับผิดชอบ
+      </div>
+      <div class="form-card-body">
+        <div class="grid-3">
+          <div class="form-group">
+            <label>ชื่อช่าง</label>
+            <select id="technicianSelect">
+              <option value="">-- เลือกช่าง --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>เวลาเริ่มงาน</label>
+            <input type="time" id="startTime" value="08:00">
+          </div>
+          <div class="form-group">
+            <label>เวลาเสร็จงาน</label>
+            <input type="time" id="endTime" value="17:00">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVE BUTTONS -->
+    <div class="inline-btns">
+      <button class="btn" style="background:#1a1a1a; border-color:#1a1a1a; color:white" onclick="previewReport()">👁 ดูตัวอย่าง / พิมพ์</button>
+      <button class="btn btn-red" onclick="saveReport()">💾 บันทึกลง Google Sheets</button>
+    </div>
+
+  </div><!-- /form section -->
+
+  <!-- ============ HISTORY SECTION ============ -->
+  <div class="section" id="section-history">
+    <div class="history-filters">
+      <input type="text" id="searchText" placeholder="🔍 ค้นหาลูกค้า, เลขที่รายงาน..." oninput="filterHistory()">
+      <select id="filterCustomer" onchange="filterHistory()">
+        <option value="">ลูกค้าทั้งหมด</option>
+      </select>
+      <select id="filterType" onchange="filterHistory()">
+        <option value="">ประเภทงานทั้งหมด</option>
+        <option value="PM">PM Maintenance</option>
+        <option value="ติดตั้ง">ติดตั้ง</option>
+        <option value="ซ่อมบำรุง">ซ่อมบำรุง</option>
+      </select>
+      <button class="btn-sm" onclick="loadHistory()" style="white-space:nowrap">🔄 โหลดข้อมูล</button>
+    </div>
+    <div id="historyList">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>คลิก "โหลดข้อมูล" เพื่อดูประวัติรายงาน</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS SECTION ============ -->
+  <div class="section" id="section-settings">
+    <div class="config-card">
+      <h3>🔗 การเชื่อมต่อ Google Sheets</h3>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Google Sheets ID</label>
+        <input type="text" id="sheetId" class="monospace" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+        <p class="help-text">จาก URL: docs.google.com/spreadsheets/d/<strong>ID ตรงนี้</strong>/edit</p>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Google Apps Script URL (Web App)</label>
+        <input type="text" id="scriptUrl" class="monospace" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:1rem; flex-wrap:wrap;">
+        <button class="btn btn-dark" onclick="saveSettings()" style="background:#1a1a1a; color:white; border-color:#1a1a1a">💾 บันทึกการตั้งค่า</button>
+        <button class="btn" onclick="testConnection()" style="color:#1a1a1a; border-color:var(--border)">🧪 ทดสอบการเชื่อมต่อ</button>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <h3>👤 จัดการรายชื่อช่าง</h3>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <input type="text" id="newTech" placeholder="ชื่อช่างใหม่" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-family:'Sarabun',sans-serif; font-size:14px;">
+        <button class="btn-sm" onclick="addTechnician()" style="white-space:nowrap">+ เพิ่ม</button>
+      </div>
+      <div id="techList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+    </div>
+
+    <div class="config-card">
+      <h3>🏢 จัดการรายชื่อลูกค้า</h3>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <input type="text" id="newCustomer" placeholder="ชื่อบริษัทลูกค้า" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-family:'Sarabun',sans-serif; font-size:14px;">
+        <button class="btn-sm" onclick="addCustomer()" style="white-space:nowrap">+ เพิ่ม</button>
+      </div>
+      <div id="customerList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+    </div>
+
+    <div class="config-card">
+      <h3>⚡ ชุดอุปกรณ์ที่ใช้บ่อย (Templates)</h3>
+      <p class="help-text" style="margin-bottom:12px">บันทึกรายการอุปกรณ์ที่ใช้บ่อยไว้เพื่อโหลดได้เร็วขึ้น</p>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <input type="text" id="templateName" placeholder="ชื่อชุดอุปกรณ์ เช่น 'ชุด MDB Schneider NW40'" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-family:'Sarabun',sans-serif; font-size:14px;">
+        <button class="btn-sm" onclick="saveCurrentAsTemplate()" style="white-space:nowrap; color:var(--red); border-color:var(--red-light)">บันทึกรายการปัจจุบัน</button>
+      </div>
+      <div id="templateList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+    </div>
+
+    <div class="config-card" style="background:#fafaf8">
+      <h3>📋 คำแนะนำการตั้งค่า Google Apps Script</h3>
+      <div style="font-size:13px; line-height:1.8; color:var(--muted);">
+        <p>1. เปิด Google Sheets ของคุณ → Extensions → Apps Script</p>
+        <p>2. วาง Code.gs ด้านล่างนี้ลงใน Editor</p>
+        <p>3. Deploy → New Deployment → Web App → Execute as Me → Anyone</p>
+        <p>4. Copy URL มาวางในช่อง "Google Apps Script URL" ด้านบน</p>
+        <hr class="divider">
+        <details>
+          <summary style="cursor:pointer; font-weight:600; color:var(--text)">📄 คลิกเพื่อดู Code.gs ที่ต้องนำไปใส่</summary>
+          <pre style="margin-top:10px; background:#1a1a1a; color:#a8d8a8; padding:1rem; border-radius:6px; overflow-x:auto; font-size:11px; line-height:1.6; white-space:pre-wrap; font-family:'IBM Plex Mono',monospace;" id="scriptCode"></pre>
+        </details>
+      </div>
+    </div>
+  </div><!-- /settings -->
+
+</main>
+
+<!-- ============ PRINT PREVIEW MODAL ============ -->
+<div class="preview-modal" id="previewModal">
+  <div class="preview-content">
+    <div class="preview-header">
+      <h3>ตัวอย่างใบรายงาน</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-sm" onclick="window.print()">🖨 พิมพ์</button>
+        <button class="btn-sm red" onclick="closePreview()">✕ ปิด</button>
+      </div>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// APP STATE & CONFIG
+// ============================================================
+let APP = {
+  sheetId: '',
+  scriptUrl: '',
+  technicians: ['ช่างที่ 1', 'ช่างที่ 2'],
+  customers: ['บริษัท ไทยฮั้วยางพารา จำกัด (มหาชน)'],
+  templates: {},
+  reports: [],
+  editingId: null
+};
+
+const WORK_CHECKS = [
+  'ตรวจสอบสภาพทั่วไป', 'ทำความสะอาดอุปกรณ์', 'ตรวจสอบการเดินสาย',
+  'ทดสอบการทำงาน', 'ตั้งค่า Parameters', 'เปลี่ยนอุปกรณ์สึกหรอ',
+  'ตรวจวัดกระแส/แรงดัน', 'ตรวจสอบ Interlock', 'ทดสอบ Protection',
+  'ตรวจสอบ Connection', 'ทาจาระบี/หล่อลื่น', 'อัพเดต Firmware'
+];
+
+const DEFAULT_EQUIPS = [
+  'Schneider ACB รุ่น NW40H1 3P 4000A 65kA/440 50/60Hz',
+  'Schneider Motor Mechanism For ACB รุ่น NW40H1 (47894+47074)',
+  'Schneider Closing Release For ACB รุ่น NW40H1 (33662+47074)',
+  'Schneider Ready to Close Contact (47080+47074)',
+  'Schneider Under Voltage Release For ACB รุ่น NW40H1 (33671+47074)',
+  'Schneider Under Voltage Time Delay For ACB รุ่น NW40H1 (33682)',
+  'Schneider Digital Power Meter METSEPM5350',
+  'Elzen CT 4000/5A Type 6',
+  'Schneider Soft Start ATS480C48Y',
+  'Schneider MCCB 3P 1000AT/1000AF 50kA NS10N3F20X',
+  'Schneider Magnatic Contactor Coil 220V LC1G630KUEN+LAG8N113P',
+  'Schneider Zelio Smart Relay 100-240V SR3B261FU',
+  'Schneider Overload (160-630 A) LR9G630',
+  'Entes_Amp Merter Digital',
+  'WIP Phase Protection WOP4',
+  'Shino Hour Meter Counter HM1+HMC'
+];
+
+const SCRIPT_CODE = `// Google Apps Script — วางใน Code.gs
+const SHEET_NAME = 'Reports';
+const META_SHEET = 'Meta';
+
+function doGet(e) {
+  const action = e.parameter.action;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (action === 'getReports') {
+    const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    return ContentService.createTextOutput(JSON.stringify({ok:true, data}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (action === 'getMeta') {
+    const sheet = ss.getSheetByName(META_SHEET);
+    if (!sheet) return ContentService.createTextOutput(JSON.stringify({ok:true, data:{}}))
+      .setMimeType(ContentService.MimeType.JSON);
+    const data = sheet.getDataRange().getValues();
+    return ContentService.createTextOutput(JSON.stringify({ok:true, data}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ok:false}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const payload = JSON.parse(e.postData.contents);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (payload.action === 'saveReport') {
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.appendRow(['ID','วันที่','เลขที่รายงาน','ลูกค้า','สาขา','ประเภทงาน',
+        'ที่อยู่','ผู้ติดต่อ','อุปกรณ์JSON','งานที่ทำ','รายละเอียด',
+        'ผลตรวจ','ข้อเสนอแนะ','ช่าง','เวลาเริ่ม','เวลาเสร็จ','นัดครั้งต่อไป','วันบันทึก']);
+    }
+    const r = payload.data;
+    const id = r.id || Date.now().toString();
+    if (r.id) {
+      const vals = sheet.getDataRange().getValues();
+      for (let i=1;i<vals.length;i++) {
+        if (vals[i][0]==r.id) {
+          sheet.getRange(i+1,1,1,18).setValues([[id,r.date,r.reportNo,r.customer,r.branch,
+            r.serviceType,r.siteAddress,r.contactPerson,JSON.stringify(r.equipment),
+            r.workChecks,r.workDetail,r.inspResult,r.recommendation,r.technician,
+            r.startTime,r.endTime,r.nextVisit,new Date().toLocaleDateString('th-TH')]]);
+          return ContentService.createTextOutput(JSON.stringify({ok:true,id}))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+    sheet.appendRow([id,r.date,r.reportNo,r.customer,r.branch,r.serviceType,
+      r.siteAddress,r.contactPerson,JSON.stringify(r.equipment),r.workChecks,
+      r.workDetail,r.inspResult,r.recommendation,r.technician,r.startTime,
+      r.endTime,r.nextVisit,new Date().toLocaleDateString('th-TH')]);
+    return ContentService.createTextOutput(JSON.stringify({ok:true,id}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ok:false}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  loadSettings();
+  renderChecks();
+  renderTechDropdown();
+  renderCustomerDropdown();
+  renderTemplates();
+  setTodayDate();
+  autoReportNo();
+  document.getElementById('scriptCode').textContent = SCRIPT_CODE;
+  // Load default equipment
+  addDefaultEquipRows();
+}
+
+function setTodayDate() {
+  const d = new Date();
+  document.getElementById('reportDate').value = d.toISOString().split('T')[0];
+}
+
+function autoReportNo() {
+  const d = new Date();
+  const year = d.getFullYear() + 543;
+  const month = String(d.getMonth()+1).padStart(2,'0');
+  const existing = APP.reports.length;
+  document.getElementById('reportNo').value = `SR-${year}${month}-${String(existing+1).padStart(3,'0')}`;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'history') loadHistory();
+}
+
+function newReport() {
+  APP.editingId = null;
+  clearForm();
+  showSection('form');
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveSettings() {
+  APP.sheetId = document.getElementById('sheetId').value.trim();
+  APP.scriptUrl = document.getElementById('scriptUrl').value.trim();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+  showToast('✅ บันทึกการตั้งค่าแล้ว');
+}
+
+function loadSettings() {
+  const saved = localStorage.getItem('enzone_app');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      APP = {...APP, ...parsed};
+    } catch(e) {}
+  }
+  document.getElementById('sheetId').value = APP.sheetId || '';
+  document.getElementById('scriptUrl').value = APP.scriptUrl || '';
+  renderTechList();
+  renderCustomerList();
+}
+
+async function testConnection() {
+  if (!APP.scriptUrl) { showStatus('กรุณากรอก Script URL ก่อน', 'err'); return; }
+  showStatus('กำลังทดสอบ...', 'loading');
+  try {
+    const r = await fetch(APP.scriptUrl + '?action=getMeta');
+    const d = await r.json();
+    showStatus('✅ เชื่อมต่อสำเร็จ!', 'ok');
+  } catch(e) {
+    showStatus('❌ เชื่อมต่อไม่ได้ — ตรวจสอบ Script URL และการ Deploy', 'err');
+  }
+}
+
+// ============================================================
+// TECHNICIANS
+// ============================================================
+function addTechnician() {
+  const v = document.getElementById('newTech').value.trim();
+  if (!v || APP.technicians.includes(v)) return;
+  APP.technicians.push(v);
+  document.getElementById('newTech').value = '';
+  renderTechList();
+  renderTechDropdown();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+}
+
+function removeTech(i) {
+  APP.technicians.splice(i, 1);
+  renderTechList(); renderTechDropdown();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+}
+
+function renderTechList() {
+  const el = document.getElementById('techList');
+  el.innerHTML = APP.technicians.map((t,i) =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:#f5f4f0;border:1px solid var(--border);border-radius:20px;font-size:13px;">
+      ${t} <button onclick="removeTech(${i})" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:14px;">×</button>
+    </span>`
+  ).join('');
+}
+
+function renderTechDropdown() {
+  const sel = document.getElementById('technicianSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- เลือกช่าง --</option>' +
+    APP.technicians.map(t => `<option value="${t}">${t}</option>`).join('');
+  sel.value = cur;
+}
+
+// ============================================================
+// CUSTOMERS
+// ============================================================
+function addCustomer() {
+  const v = document.getElementById('newCustomer').value.trim();
+  if (!v || APP.customers.includes(v)) return;
+  APP.customers.push(v);
+  document.getElementById('newCustomer').value = '';
+  renderCustomerList(); renderCustomerDropdown();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+}
+
+function removeCustomer(i) {
+  APP.customers.splice(i, 1);
+  renderCustomerList(); renderCustomerDropdown();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+}
+
+function renderCustomerList() {
+  const el = document.getElementById('customerList');
+  el.innerHTML = APP.customers.map((c,i) =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:#f5f4f0;border:1px solid var(--border);border-radius:20px;font-size:13px;max-width:280px;">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c}</span>
+      <button onclick="removeCustomer(${i})" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:14px;flex-shrink:0">×</button>
+    </span>`
+  ).join('');
+}
+
+function renderCustomerDropdown() {
+  const sel = document.getElementById('customerSelect');
+  const cur = sel.value;
+  const filterSel = document.getElementById('filterCustomer');
+  sel.innerHTML = '<option value="">-- เลือกหรือเพิ่มลูกค้าใหม่ --</option>' +
+    APP.customers.map(c => `<option value="${c}">${c}</option>`).join('') +
+    '<option value="__new__">✏️ เพิ่มลูกค้าใหม่...</option>';
+  sel.value = cur;
+  if (filterSel) {
+    filterSel.innerHTML = '<option value="">ลูกค้าทั้งหมด</option>' +
+      APP.customers.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+}
+
+function fillCustomerInfo() {
+  const v = document.getElementById('customerSelect').value;
+  if (v === '__new__') {
+    const name = prompt('ชื่อลูกค้าใหม่:');
+    if (name && name.trim()) {
+      if (!APP.customers.includes(name.trim())) {
+        APP.customers.push(name.trim());
+        renderCustomerList(); renderCustomerDropdown();
+        localStorage.setItem('enzone_app', JSON.stringify(APP));
+      }
+      document.getElementById('customerSelect').value = name.trim();
+    }
+  }
+}
+
+// ============================================================
+// EQUIPMENT TABLE
+// ============================================================
+function addDefaultEquipRows() {
+  const tbody = document.getElementById('equipBody');
+  tbody.innerHTML = '';
+  DEFAULT_EQUIPS.forEach((eq, i) => addEquipRow(eq, '', 'ปกติ'));
+}
+
+function addEquipRow(name='', sn='', status='ปกติ') {
+  const tbody = document.getElementById('equipBody');
+  const idx = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align:center;color:var(--muted);font-size:12px">${idx}</td>
+    <td><input type="text" value="${name}" placeholder="ชื่ออุปกรณ์ รุ่น สเปค"></td>
+    <td><input type="text" value="${sn}" placeholder="Serial No."></td>
+    <td>
+      <select style="font-size:13px">
+        <option ${status==='ปกติ'?'selected':''}>ปกติ</option>
+        <option ${status==='เปลี่ยนใหม่'?'selected':''}>เปลี่ยนใหม่</option>
+        <option ${status==='ซ่อม'?'selected':''}>ซ่อม</option>
+        <option ${status==='รอชิ้นส่วน'?'selected':''}>รอชิ้นส่วน</option>
+      </select>
+    </td>
+    <td><button class="btn-rm" onclick="this.closest('tr').remove(); renumberEquip()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function renumberEquip() {
+  document.querySelectorAll('#equipBody tr').forEach((tr, i) => {
+    tr.cells[0].textContent = i + 1;
+  });
+}
+
+// ============================================================
+// TEMPLATES
+// ============================================================
+function saveCurrentAsTemplate() {
+  const name = document.getElementById('templateName').value.trim();
+  if (!name) { showToast('กรุณากรอกชื่อชุดอุปกรณ์'); return; }
+  const rows = [...document.querySelectorAll('#equipBody tr')].map(tr => ({
+    name: tr.cells[1].querySelector('input').value,
+    sn: tr.cells[2].querySelector('input').value,
+    status: tr.cells[3].querySelector('select').value
+  })).filter(r => r.name);
+  if (!rows.length) { showToast('กรุณาเพิ่มอุปกรณ์ก่อน'); return; }
+  APP.templates[name] = rows;
+  document.getElementById('templateName').value = '';
+  renderTemplates();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+  showToast('✅ บันทึกชุดอุปกรณ์แล้ว');
+}
+
+function renderTemplates() {
+  const el = document.getElementById('templateList');
+  const sel = document.getElementById('templateSelect');
+  const names = Object.keys(APP.templates);
+  el.innerHTML = names.map(n =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:#f5f4f0;border:1px solid var(--border);border-radius:20px;font-size:13px;">
+      ⚡ ${n}
+      <button onclick="deleteTemplate('${n}')" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:14px;">×</button>
+    </span>`
+  ).join('');
+  if (sel) {
+    sel.innerHTML = '<option value="">⚡ โหลดชุดอุปกรณ์ที่บันทึกไว้...</option>' +
+      names.map(n => `<option value="${n}">${n}</option>`).join('');
+  }
+}
+
+function deleteTemplate(name) {
+  if (!confirm(`ลบชุด "${name}"?`)) return;
+  delete APP.templates[name];
+  renderTemplates();
+  localStorage.setItem('enzone_app', JSON.stringify(APP));
+}
+
+function loadEquipTemplate() {
+  const name = document.getElementById('templateSelect').value;
+  if (!name || !APP.templates[name]) return;
+  const tbody = document.getElementById('equipBody');
+  tbody.innerHTML = '';
+  APP.templates[name].forEach(r => addEquipRow(r.name, r.sn, r.status));
+  showToast(`✅ โหลดชุด "${name}" แล้ว`);
+}
+
+// ============================================================
+// WORK CHECKLIST
+// ============================================================
+function renderChecks() {
+  const el = document.getElementById('checkGrid');
+  el.innerHTML = WORK_CHECKS.map((c, i) => `
+    <label class="check-item" id="ci-${i}">
+      <input type="checkbox" id="chk-${i}" onchange="toggleCheck(${i})"> ${c}
+    </label>
+  `).join('');
+}
+
+function toggleCheck(i) {
+  const el = document.getElementById('ci-'+i);
+  el.classList.toggle('checked', document.getElementById('chk-'+i).checked);
+}
+
+function getCheckedItems() {
+  return WORK_CHECKS.filter((_, i) => document.getElementById('chk-'+i)?.checked).join(', ');
+}
+
+// ============================================================
+// FORM DATA
+// ============================================================
+function getFormData() {
+  const equipment = [...document.querySelectorAll('#equipBody tr')].map(tr => ({
+    name: tr.cells[1].querySelector('input').value,
+    sn: tr.cells[2].querySelector('input').value,
+    status: tr.cells[3].querySelector('select').value
+  })).filter(r => r.name);
+
+  return {
+    id: APP.editingId || null,
+    date: document.getElementById('reportDate').value,
+    reportNo: document.getElementById('reportNo').value,
+    customer: document.getElementById('customerSelect').value,
+    branch: document.getElementById('branch').value,
+    serviceType: document.getElementById('serviceType').value,
+    siteAddress: document.getElementById('siteAddress').value,
+    contactPerson: document.getElementById('contactPerson').value,
+    equipment,
+    workChecks: getCheckedItems(),
+    workDetail: document.getElementById('workDetail').value,
+    inspResult: document.getElementById('inspResult').value,
+    recommendation: document.getElementById('recommendation').value,
+    technician: document.getElementById('technicianSelect').value,
+    startTime: document.getElementById('startTime').value,
+    endTime: document.getElementById('endTime').value,
+    nextVisit: document.getElementById('nextVisit').value,
+  };
+}
+
+function fillForm(data) {
+  document.getElementById('reportNo').value = data.reportNo || '';
+  document.getElementById('reportDate').value = data.date || '';
+  document.getElementById('serviceType').value = data.serviceType || '';
+  document.getElementById('customerSelect').value = data.customer || '';
+  document.getElementById('branch').value = data.branch || '';
+  document.getElementById('siteAddress').value = data.siteAddress || '';
+  document.getElementById('contactPerson').value = data.contactPerson || '';
+  document.getElementById('workDetail').value = data.workDetail || '';
+  document.getElementById('inspResult').value = data.inspResult || 'ปกติ';
+  document.getElementById('recommendation').value = data.recommendation || '';
+  document.getElementById('technicianSelect').value = data.technician || '';
+  document.getElementById('startTime').value = data.startTime || '08:00';
+  document.getElementById('endTime').value = data.endTime || '17:00';
+  document.getElementById('nextVisit').value = data.nextVisit || '';
+
+  // Equipment
+  const tbody = document.getElementById('equipBody');
+  tbody.innerHTML = '';
+  const equip = typeof data.equipment === 'string' ? JSON.parse(data.equipment) : (data.equipment || []);
+  equip.forEach(e => addEquipRow(e.name, e.sn, e.status));
+
+  // Checks
+  renderChecks();
+  const checks = (data.workChecks || '').split(', ');
+  WORK_CHECKS.forEach((c, i) => {
+    if (checks.includes(c)) {
+      document.getElementById('chk-'+i).checked = true;
+      document.getElementById('ci-'+i).classList.add('checked');
+    }
+  });
+}
+
+function clearForm() {
+  document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('reportNo').value = '';
+  document.getElementById('serviceType').value = '';
+  document.getElementById('customerSelect').value = '';
+  document.getElementById('branch').value = '';
+  document.getElementById('siteAddress').value = '';
+  document.getElementById('contactPerson').value = '';
+  document.getElementById('workDetail').value = '';
+  document.getElementById('inspResult').value = 'ปกติ';
+  document.getElementById('recommendation').value = '';
+  document.getElementById('technicianSelect').value = '';
+  document.getElementById('startTime').value = '08:00';
+  document.getElementById('endTime').value = '17:00';
+  document.getElementById('nextVisit').value = '';
+  document.getElementById('equipBody').innerHTML = '';
+  renderChecks();
+  autoReportNo();
+  addDefaultEquipRows();
+}
+
+// ============================================================
+// SAVE
+// ============================================================
+async function saveReport() {
+  const data = getFormData();
+  if (!data.customer) { showToast('กรุณาเลือกลูกค้า'); return; }
+  if (!data.reportNo) { showToast('กรุณากรอกเลขที่รายงาน'); return; }
+
+  if (!APP.scriptUrl) {
+    // Save locally
+    const existIdx = APP.reports.findIndex(r => r.id === data.id);
+    data.id = data.id || Date.now().toString();
+    if (existIdx >= 0) APP.reports[existIdx] = data;
+    else APP.reports.push(data);
+    localStorage.setItem('enzone_reports', JSON.stringify(APP.reports));
+    showToast('✅ บันทึกแล้ว (Local — ตั้งค่า Sheets เพื่อบันทึกออนไลน์)');
+    APP.editingId = data.id;
+    return;
+  }
+
+  showStatus('กำลังบันทึก...', 'loading');
+  try {
+    const r = await fetch(APP.scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveReport', data })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      APP.editingId = d.id;
+      showStatus('✅ บันทึกลง Google Sheets สำเร็จ!', 'ok');
+      showToast('✅ บันทึกสำเร็จ');
+      // Also save locally
+      const existIdx = APP.reports.findIndex(rep => rep.id === d.id);
+      data.id = d.id;
+      if (existIdx >= 0) APP.reports[existIdx] = data;
+      else APP.reports.push(data);
+      localStorage.setItem('enzone_reports', JSON.stringify(APP.reports));
+    } else {
+      showStatus('❌ บันทึกไม่สำเร็จ', 'err');
+    }
+  } catch(e) {
+    showStatus('❌ เชื่อมต่อไม่ได้ — บันทึก Local แทน', 'err');
+    data.id = data.id || Date.now().toString();
+    const existIdx = APP.reports.findIndex(r => r.id === data.id);
+    if (existIdx >= 0) APP.reports[existIdx] = data;
+    else APP.reports.push(data);
+    localStorage.setItem('enzone_reports', JSON.stringify(APP.reports));
+  }
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function loadHistory() {
+  const savedLocal = localStorage.getItem('enzone_reports');
+  if (savedLocal) APP.reports = JSON.parse(savedLocal);
+
+  if (APP.scriptUrl) {
+    try {
+      const r = await fetch(APP.scriptUrl + '?action=getReports');
+      const d = await r.json();
+      if (d.ok && d.data && d.data.length > 1) {
+        const headers = d.data[0];
+        APP.reports = d.data.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((h, i) => obj[h] = row[i]);
+          return {
+            id: obj['ID'], date: obj['วันที่'], reportNo: obj['เลขที่รายงาน'],
+            customer: obj['ลูกค้า'], branch: obj['สาขา'], serviceType: obj['ประเภทงาน'],
+            siteAddress: obj['ที่อยู่'], contactPerson: obj['ผู้ติดต่อ'],
+            equipment: obj['อุปกรณ์JSON'], workChecks: obj['งานที่ทำ'],
+            workDetail: obj['รายละเอียด'], inspResult: obj['ผลตรวจ'],
+            recommendation: obj['ข้อเสนอแนะ'], technician: obj['ช่าง'],
+            startTime: obj['เวลาเริ่ม'], endTime: obj['เวลาเสร็จ'],
+            nextVisit: obj['นัดครั้งต่อไป']
+          };
+        });
+        localStorage.setItem('enzone_reports', JSON.stringify(APP.reports));
+      }
+    } catch(e) {}
+  }
+  renderHistory(APP.reports);
+}
+
+function renderHistory(reports) {
+  const el = document.getElementById('historyList');
+  if (!reports.length) {
+    el.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <p>ยังไม่มีรายงาน — เริ่มสร้างรายงานแรก!</p></div>`;
+    return;
+  }
+  const sorted = [...reports].reverse();
+  el.innerHTML = sorted.map(r => `
+    <div class="report-card" onclick="editReport('${r.id}')">
+      <span class="report-card-num">${r.reportNo || r.id}</span>
+      <div class="report-card-info">
+        <div class="report-card-customer">${r.customer || '-'}${r.branch ? ' — '+r.branch : ''}</div>
+        <div class="report-card-date">📅 ${r.date || '-'} &nbsp; 👷 ${r.technician || '-'}</div>
+        <div class="report-card-service">🔧 ${r.serviceType || '-'}</div>
+      </div>
+      <span class="badge ${r.inspResult==='ปกติ'?'badge-green':'badge-red'}">${r.inspResult||'ปกติ'}</span>
+      <div class="report-card-actions" onclick="event.stopPropagation()">
+        <button class="btn-sm" onclick="editReport('${r.id}')">✏️ แก้ไข</button>
+        <button class="btn-sm" onclick="previewById('${r.id}')">👁 พิมพ์</button>
+        <button class="btn-sm red" onclick="deleteReport('${r.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterHistory() {
+  const txt = document.getElementById('searchText').value.toLowerCase();
+  const cust = document.getElementById('filterCustomer').value;
+  const type = document.getElementById('filterType').value;
+  const filtered = APP.reports.filter(r => {
+    const matchTxt = !txt || (r.customer||'').toLowerCase().includes(txt) || (r.reportNo||'').toLowerCase().includes(txt);
+    const matchCust = !cust || r.customer === cust;
+    const matchType = !type || (r.serviceType||'').includes(type);
+    return matchTxt && matchCust && matchType;
+  });
+  renderHistory(filtered);
+}
+
+function editReport(id) {
+  const r = APP.reports.find(rep => rep.id === id);
+  if (!r) return;
+  APP.editingId = id;
+  fillForm(r);
+  showSection('form');
+}
+
+function deleteReport(id) {
+  if (!confirm('ลบรายงานนี้?')) return;
+  APP.reports = APP.reports.filter(r => r.id !== id);
+  localStorage.setItem('enzone_reports', JSON.stringify(APP.reports));
+  renderHistory(APP.reports);
+  showToast('ลบแล้ว');
+}
+
+// ============================================================
+// PREVIEW / PRINT
+// ============================================================
+function previewReport() {
+  const data = getFormData();
+  document.getElementById('previewBody').innerHTML = buildDoc(data);
+  document.getElementById('previewModal').classList.add('open');
+}
+
+function previewById(id) {
+  const r = APP.reports.find(rep => rep.id === id);
+  if (!r) return;
+  const equip = typeof r.equipment === 'string' ? JSON.parse(r.equipment || '[]') : (r.equipment || []);
+  r.equipment = equip;
+  document.getElementById('previewBody').innerHTML = buildDoc(r);
+  document.getElementById('previewModal').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('previewModal').classList.remove('open');
+}
+
+function buildDoc(d) {
+  const equip = Array.isArray(d.equipment) ? d.equipment : [];
+  const thDate = d.date ? formatThaiDate(d.date) : '-';
+
+  return `
+    <div class="doc-header">
+      <div class="doc-company">
+        <span class="red">ห้างหุ้นส่วนจำกัด เอ็นโซน เซอร์วิส ( สาขา00001 )</span>
+        <strong>ENZONE SERVICE LIMITED PARTNERSHIP</strong>
+        111/9 ถ.นิตโย หมู่4 ต.หนองบัว อ.เมืองอุดรธานี จ.อุดรธานี 41000<br>
+        โทรศัพท์ : 096 4499469 &nbsp; อีเมล : enzoneser@gmail.com
+      </div>
+      <div class="doc-logo-box">
+        <div style="font-size:28px;font-weight:900;color:#c0392b;letter-spacing:-1px">ENZONE<br><span style="color:#1a1a1a;font-size:14px">SERVICE</span></div>
+      </div>
+    </div>
+
+    <div class="doc-title">ใบรายงานการบริการ (Service Report)</div>
+
+    <div class="doc-meta">
+      <div class="doc-meta-row">
+        <div class="doc-meta-label">วันที่ (Date)</div>
+        <div class="doc-meta-value">${thDate}</div>
+      </div>
+      <div class="doc-meta-row">
+        <div class="doc-meta-label">เลขที่รายงาน</div>
+        <div class="doc-meta-value" style="font-family:'IBM Plex Mono',monospace;font-size:13px">${d.reportNo||'-'}</div>
+      </div>
+      <div class="doc-meta-row">
+        <div class="doc-meta-label">ลูกค้า (Customer)</div>
+        <div class="doc-meta-value" style="font-weight:700">${d.customer||'-'}${d.branch?' สาขา'+d.branch:''}</div>
+      </div>
+      <div class="doc-meta-row">
+        <div class="doc-meta-label">บริการ (Service)</div>
+        <div class="doc-meta-value">${d.serviceType||'-'}</div>
+      </div>
+      ${d.siteAddress ? `<div class="doc-meta-row"><div class="doc-meta-label">สถานที่</div><div class="doc-meta-value">${d.siteAddress}</div></div>` : ''}
+      ${d.contactPerson ? `<div class="doc-meta-row"><div class="doc-meta-label">ผู้ติดต่อ</div><div class="doc-meta-value">${d.contactPerson}</div></div>` : ''}
+    </div>
+
+    <div class="doc-section-title">ข้อมูลอุปกรณ์ (Equipment Details)</div>
+    <table class="doc-equip-table">
+      <thead><tr><th>#</th><th>อุปกรณ์</th><th>S/N</th><th>สถานะ</th></tr></thead>
+      <tbody>
+        ${equip.map((e,i) => `<tr><td style="text-align:center;color:#888;font-size:11px">${i+1}</td><td>${e.name||''}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${e.sn||''}</td><td>${e.status||''}</td></tr>`).join('')}
+      </tbody>
+    </table>
+
+    ${d.workChecks ? `<div class="doc-section-title">งานที่ดำเนินการ</div><p style="font-size:13px;line-height:1.8">${d.workChecks}</p>` : ''}
+    ${d.workDetail ? `<p style="font-size:13px;margin-top:8px;line-height:1.8;color:#444">${d.workDetail}</p>` : ''}
+
+    <div class="doc-section-title">ผลการตรวจสอบ</div>
+    <table class="doc-equip-table">
+      <tr><td style="background:#f5f4f0;font-weight:600;width:160px">ผลการตรวจสอบ</td><td><strong>${d.inspResult||'-'}</strong></td></tr>
+      ${d.nextVisit?`<tr><td style="background:#f5f4f0;font-weight:600">นัดครั้งต่อไป</td><td>${formatThaiDate(d.nextVisit)}</td></tr>`:''}
+      ${d.recommendation?`<tr><td style="background:#f5f4f0;font-weight:600">ข้อเสนอแนะ</td><td>${d.recommendation}</td></tr>`:''}
+    </table>
+
+    <div class="doc-sig-row">
+      <div class="doc-sig-box">
+        <p>ผู้ให้บริการ : ${d.technician||'...........................'}</p>
+        <p style="margin-top:4px">เวลา : ${d.startTime||''} – ${d.endTime||''} น.</p>
+        <p style="margin-top:40px">ลายมือชื่อ : ..........................................</p>
+      </div>
+      <div class="doc-sig-box">
+        <p>ผู้รับบริการ : ...</p>
+        <p style="margin-top:4px">ตำแหน่ง : ...</p>
+        <p style="margin-top:40px">ลายมือชื่อ : ..........................................</p>
+      </div>
+    </div>
+  `;
+}
+
+function formatThaiDate(dateStr) {
+  if (!dateStr) return '-';
+  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const d = new Date(dateStr);
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()+543}`;
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showStatus(msg, type) {
+  const el = document.getElementById('statusBar');
+  el.className = 'status-bar show ' + type;
+  el.innerHTML = (type==='loading' ? '<span class="spinner"></span>' : '') + msg;
+  if (type !== 'loading') setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
