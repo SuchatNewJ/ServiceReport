@@ -171,10 +171,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 .doc-sig-box{border-top:1px solid #000;padding-top:6px;font-size:12px;color:#555}
 
 @media print{
-  .app-header,.tabs,.save-row,.hist-bar,.ract,.hbtn,.modal-head{display:none!important}
-  .modal{position:static;background:none;display:block}
-  .modal-box{width:100%;max-height:none;border-radius:0}
-  .modal-body{padding:0}
+  /* ซ่อนทุกอย่างในหน้า print ยกเว้น print-area */
+  body > * { display:none !important; }
+  #print-area { display:block !important; }
+  #print-area { margin:0; padding:16px; }
 }
 </style>
 </head>
@@ -446,7 +446,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
     <div class="modal-head">
       <h3>ตัวอย่างใบรายงานการบริการ</h3>
       <div style="display:flex;gap:6px">
-        <button class="sbtn" onclick="window.print()">🖨 พิมพ์</button>
+        <button class="sbtn" onclick="doPrint()">🖨 พิมพ์</button>
         <button class="sbtn del" onclick="document.getElementById('pModal').classList.remove('open')">✕ ปิด</button>
       </div>
     </div>
@@ -455,6 +455,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- พื้นที่สำหรับพิมพ์ — ซ่อนอยู่ แสดงเฉพาะตอน print -->
+<div id="print-area" style="display:none"></div>
 
 <script>
 // =============================================
@@ -1048,8 +1051,16 @@ async function delReport(id) {
 // =============================================
 // PREVIEW / PRINT
 // =============================================
+function nl2br(s) {
+  // แปลง newline จาก textarea → <br> สำหรับแสดงใน HTML
+  if (!s) return '-';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
 function previewReport() {
-  document.getElementById('pBody').innerHTML = buildDoc(getForm());
+  const html = buildDoc(getForm());
+  document.getElementById('pBody').innerHTML = html;
+  document.getElementById('print-area').innerHTML = html;
   document.getElementById('pModal').classList.add('open');
 }
 
@@ -1057,8 +1068,15 @@ function previewById(id) {
   const r = A.reports.find(x => x.id === id);
   if (!r) return;
   const d = { ...r, equipment: typeof r.equipment === 'string' ? parseJ(r.equipment, []) : (r.equipment || []) };
-  document.getElementById('pBody').innerHTML = buildDoc(d);
+  const html = buildDoc(d);
+  document.getElementById('pBody').innerHTML = html;
+  document.getElementById('print-area').innerHTML = html;
   document.getElementById('pModal').classList.add('open');
+}
+
+function doPrint() {
+  // copy doc content to print-area แล้วสั่งพิมพ์ — ไม่ต้องผ่าน modal
+  window.print();
 }
 
 function buildDoc(d) {
@@ -1118,10 +1136,10 @@ function buildDoc(d) {
 
     <div class="doc-sec">รายละเอียดการบริการ (Service Details)</div>
     <table class="doc-dtable">
-      <tr><td>อาการผิดปกติ</td><td>${d.symptom || '-'}</td></tr>
-      <tr><td>สาเหตุ</td><td>${d.cause || '-'}</td></tr>
-      <tr><td>วิธีการแก้ไข</td><td>${d.fix || '-'}</td></tr>
-      <tr><td>อะไหล่ที่ใช้</td><td>${d.parts || '-'}</td></tr>
+      <tr><td>อาการผิดปกติ</td><td>${nl2br(d.symptom)}</td></tr>
+      <tr><td>สาเหตุ</td><td>${nl2br(d.cause)}</td></tr>
+      <tr><td>วิธีการแก้ไข</td><td>${nl2br(d.fix)}</td></tr>
+      <tr><td>อะไหล่ที่ใช้</td><td>${nl2br(d.parts)}</td></tr>
     </table>
 
     <div class="doc-sec">สรุปผล (Summary)</div>
@@ -1130,10 +1148,10 @@ function buildDoc(d) {
         <td>สถานะ</td>
         <td><strong>${STATUS_MAP[d.status] || d.status || '-'}</strong></td>
         <td style="width:80px;background:#f5f5f5;font-weight:700;color:#444">เหตุผล</td>
-        <td>${d.reason || '-'}</td>
+        <td>${nl2br(d.reason)}</td>
       </tr>
       <tr><td>แรงงาน / เวลา</td><td colspan="3">${labourStr}</td></tr>
-      <tr><td>หมายเหตุ</td><td colspan="3">${d.note || '-'}</td></tr>
+      <tr><td>หมายเหตุ</td><td colspan="3">${nl2br(d.note)}</td></tr>
     </table>
 
     <p style="text-align:center;font-size:12px;color:#555;margin:20px 0">
