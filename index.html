@@ -171,10 +171,133 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 .doc-sig-box{border-top:1px solid #000;padding-top:6px;font-size:12px;color:#555}
 
 @media print{
-  /* ซ่อนทุกอย่างในหน้า print ยกเว้น print-area */
   body > * { display:none !important; }
   #print-area { display:block !important; }
   #print-area { margin:0; padding:16px; }
+}
+
+/* =============================================
+   RESPONSIVE — MOBILE (≤640px)
+   ============================================= */
+@media (max-width:640px){
+  /* Header */
+  .app-header{ padding:0 .9rem; height:auto; min-height:52px; flex-wrap:wrap; }
+  .logo-sub{ display:none }
+  .app-header > div:last-child{ gap:5px }
+  .hbtn{ padding:6px 10px; font-size:12px }
+  .hbtn.red span{ display:none } /* ซ่อนข้อความ แสดงแค่ไอคอน */
+
+  /* Tabs */
+  .tabs{ padding:0 .5rem }
+  .tab{ padding:11px 12px; font-size:12px }
+
+  /* Main padding */
+  .main{ padding:.9rem }
+
+  /* Card */
+  .card-body{ padding:.9rem 1rem }
+  .card-head{ font-size:12px; padding:9px 14px }
+
+  /* Grid — stack to 1 column */
+  .grid2, .grid3{ grid-template-columns:1fr !important }
+
+  /* Inputs */
+  .fg input, .fg select, .fg textarea{
+    font-size:16px !important; /* ป้องกัน iOS zoom */
+    padding:10px 11px;
+  }
+  .fg textarea{ min-height:80px }
+
+  /* Date wrap */
+  .date-wrap{ padding:10px 11px }
+  .date-display{ font-size:16px }
+
+  /* Service chips — full width */
+  .svc-checks{ gap:7px }
+  .svc-chip{ flex:1; min-width:calc(50% - 4px); justify-content:center; padding:10px 8px }
+
+  /* Status chips — stack */
+  .status-chips{ flex-direction:column; gap:7px }
+  .s-chip{ width:100%; text-align:center; padding:12px }
+
+  /* Equipment table — horizontal scroll */
+  .etable-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -1rem; padding:0 1rem }
+  .etable{ min-width:480px; font-size:13px }
+
+  /* Labour row */
+  .labour-row{ gap:8px }
+  .num-inp{ width:64px; font-size:16px !important }
+
+  /* History card — restructure for mobile */
+  .rcard{
+    flex-wrap:wrap;
+    gap:8px;
+    padding:.75rem .9rem;
+    align-items:flex-start;
+  }
+  .rno{ font-size:10px }
+  .ri{ width:calc(100% - 70px) }
+  .ri-cust{ white-space:normal; font-size:14px }
+  .ri-sub{ white-space:normal }
+  .badge{ margin-left:auto }
+  .ract{
+    width:100%;
+    border-top:1px solid var(--border);
+    padding-top:8px;
+    margin-top:2px;
+    justify-content:flex-end;
+    gap:6px;
+  }
+  .sbtn{ padding:7px 14px; font-size:13px }
+
+  /* History filter bar */
+  .hist-bar{ gap:7px }
+  .hist-bar input{ min-width:100%; }
+  .hist-bar select{ flex:1; min-width:0 }
+
+  /* Sync bar */
+  #histSyncBar{ flex-direction:column; align-items:flex-start; gap:8px }
+  #histSyncBar button{ width:100%; justify-content:center; display:flex }
+
+  /* Save row */
+  .save-row{ flex-direction:column }
+  .save-row .sbtn, .save-row .hbtn{ width:100%; justify-content:center; padding:12px; font-size:15px }
+
+  /* Settings grid */
+  .settings-grid{ grid-template-columns:1fr !important }
+
+  /* Modal — full screen on mobile */
+  .modal-box{
+    width:100%;
+    height:100%;
+    max-height:100%;
+    border-radius:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .modal-body{ flex:1; overflow-y:auto; padding:1rem }
+  .modal-head{ padding:12px 14px }
+
+  /* Toast */
+  .toast{ left:1rem; right:1rem; bottom:1rem; text-align:center }
+
+  /* Template toolbar */
+  .tmpl-bar{ flex-wrap:wrap }
+  .tmpl-bar select{ min-width:100% }
+
+  /* DataStatus grid */
+  #dataStatusBox > div:first-child{
+    grid-template-columns:1fr 1fr !important;
+  }
+}
+
+/* TABLET (641–900px) */
+@media (min-width:641px) and (max-width:900px){
+  .main{ padding:1.2rem }
+  .grid3{ grid-template-columns:1fr 1fr }
+  .rcard{ flex-wrap:wrap }
+  .ract{ flex-shrink:0 }
+  .modal-box{ width:96% }
 }
 </style>
 </head>
@@ -189,8 +312,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
     </div>
   </div>
   <div style="display:flex;gap:7px">
-    <button class="hbtn" onclick="goTab('settings')">⚙ ตั้งค่า</button>
-    <button class="hbtn red" onclick="newReport()">+ สร้างรายงานใหม่</button>
+    <button class="hbtn" onclick="goTab('settings')">⚙ <span>ตั้งค่า</span></button>
+    <button class="hbtn red" onclick="newReport()">+ <span>สร้างรายงานใหม่</span></button>
   </div>
 </header>
 
@@ -280,24 +403,27 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
       <span style="margin-left:auto;font-size:11px;opacity:.6;font-weight:400">โหลดจากชุดที่บันทึกไว้ หรือเพิ่มเองได้</span>
     </div>
     <div class="card-body">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" class="tmpl-bar">
         <select id="tmplSel" style="flex:1;min-width:200px;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-family:'Sarabun',sans-serif;font-size:13px;background:#fff">
           <option value="">⚡ โหลดชุดอุปกรณ์ที่บันทึกไว้...</option>
         </select>
         <button class="sbtn" onclick="loadTemplate()">โหลด</button>
         <button class="sbtn" onclick="addERow()" style="color:var(--red);border-color:var(--red-light)">+ เพิ่มแถว</button>
       </div>
+      <div class="etable-wrap">
       <table class="etable">
         <thead>
           <tr>
             <th style="width:30px">#</th>
             <th>รายละเอียดอุปกรณ์</th>
-            <th style="width:170px">S/N</th>
+            <th style="width:58px;text-align:center">จำนวน</th>
+            <th style="width:130px">S/N</th>
             <th style="width:30px"></th>
           </tr>
         </thead>
         <tbody id="equipBody"></tbody>
       </table>
+      </div>
       <button class="add-row" onclick="addERow()">+ เพิ่มอุปกรณ์</button>
     </div>
   </div>
@@ -405,7 +531,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
   <div class="card">
     <div class="card-head"><span class="num" style="background:#555;font-size:9px">GS</span> Google Sheets — Apps Script</div>
     <div class="card-body">
-      <div class="grid2">
+      <div class="grid2 settings-grid">
         <div class="fg">
           <label>Google Apps Script URL (Web App)</label>
           <input type="text" id="s_url" class="mono" placeholder="https://script.google.com/macros/s/.../exec">
@@ -814,14 +940,17 @@ function onCustChange() {
 // =============================================
 // EQUIPMENT
 // =============================================
-function addERow(name='', sn='') {
+function addERow(name='', qty='1', sn='') {
   const tb = document.getElementById('equipBody');
   const i = tb.rows.length + 1;
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="text-align:center;color:var(--muted);font-size:11px;width:30px">${i}</td>
     <td><input type="text" value="${esc(name)}" placeholder="ชื่ออุปกรณ์ รุ่น สเปค..."></td>
-    <td><input type="text" value="${esc(sn)}" placeholder="Serial No." class="mono"></td>
+    <td style="text-align:center;width:58px">
+      <input type="number" value="${esc(String(qty||1))}" min="1" style="text-align:center;width:44px;font-weight:600">
+    </td>
+    <td style="width:130px"><input type="text" value="${esc(sn)}" placeholder="S/N" class="mono"></td>
     <td><button class="rm-btn" onclick="this.closest('tr').remove();renumE()">×</button></td>`;
   tb.appendChild(tr);
 }
@@ -833,7 +962,8 @@ function renumE() {
 function getEquip() {
   return [...document.querySelectorAll('#equipBody tr')].map(tr => ({
     name: tr.cells[1].querySelector('input').value.trim(),
-    sn: tr.cells[2].querySelector('input').value.trim()
+    qty:  tr.cells[2].querySelector('input').value.trim() || '1',
+    sn:   tr.cells[3].querySelector('input').value.trim()
   })).filter(r => r.name);
 }
 
@@ -878,7 +1008,7 @@ function loadTemplate() {
   const n = document.getElementById('tmplSel').value;
   if (!n || !A.templates[n]) { toast('กรุณาเลือกชุดอุปกรณ์ก่อน'); return; }
   document.getElementById('equipBody').innerHTML = '';
-  A.templates[n].forEach(r => addERow(r.name, r.sn));
+  A.templates[n].forEach(r => addERow(r.name, r.qty || '1', r.sn));
   toast(`✅ โหลดชุด "${n}" (${A.templates[n].length} รายการ) แล้ว`);
 }
 
@@ -931,7 +1061,7 @@ function fillForm(d) {
   // equipment
   document.getElementById('equipBody').innerHTML = '';
   const eq = typeof d.equipment === 'string' ? parseJ(d.equipment, []) : (d.equipment || []);
-  if (eq.length) eq.forEach(r => addERow(r.name, r.sn));
+  if (eq.length) eq.forEach(r => addERow(r.name, r.qty || '1', r.sn));
   else { addERow(); addERow(); }
 }
 
@@ -1175,11 +1305,16 @@ function buildDoc(d) {
 
     <div class="doc-sec">ข้อมูลอุปกรณ์ (Equipment Details)</div>
     <table class="doc-etable">
-      <thead><tr><th>#</th><th>อุปกรณ์</th><th style="width:170px">S/N</th></tr></thead>
+      <thead><tr><th>#</th><th>รายละเอียดอุปกรณ์</th><th style="width:48px;text-align:center">จำนวน</th><th style="width:130px">S/N</th></tr></thead>
       <tbody>
         ${eq.length
-          ? eq.map((e,i) => `<tr><td style="text-align:center;color:#888;font-size:11px">${i+1}</td><td>${e.name||''}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${e.sn||''}</td></tr>`).join('')
-          : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:10px">-</td></tr>'}
+          ? eq.map((e,i) => `<tr>
+              <td style="text-align:center;color:#888;font-size:11px">${i+1}</td>
+              <td>${e.name||''}</td>
+              <td style="text-align:center;font-weight:700">${e.qty && e.qty!='1' ? `<span style="background:#1a1a1a;color:#fff;padding:1px 7px;border-radius:10px;font-size:12px">${e.qty}</span>` : (e.qty||1)}</td>
+              <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${e.sn||''}</td>
+            </tr>`).join('')
+          : '<tr><td colspan="4" style="color:#aaa;text-align:center;padding:10px">-</td></tr>'}
       </tbody>
     </table>
 
