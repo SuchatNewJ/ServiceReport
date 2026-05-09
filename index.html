@@ -1433,22 +1433,27 @@ async function saveReport() {
   try {
     const r = await fetch(A.scriptUrl, {
       method: 'POST',
-      body: JSON.stringify({ action: 'save', data: d })
+      body: JSON.stringify({ action: 'save', data: d, sheetName: A.sheetName || 'Reports' })
     });
-    const js = await r.json();
+    const text = await r.text();
+    if (text.trim().startsWith('<')) {
+      showSbar('❌ Script ตอบกลับเป็น HTML — กรุณา Deploy ใหม่ (New Deployment)', 'err');
+      return;
+    }
+    const js = JSON.parse(text);
     if (js.ok) {
       if (js.data && js.data.savedAt) {
         document.getElementById('f_savedAt').value = js.data.savedAt;
-        A.reports[A.reports.findIndex(r => r.id === d.id)].savedAt = js.data.savedAt;
-        localStorage.setItem('enzone_rpt', JSON.stringify(A.reports));
+        const ri = A.reports.findIndex(rr => rr.id === d.id);
+        if (ri >= 0) { A.reports[ri].savedAt = js.data.savedAt; localStorage.setItem('enzone_rpt', JSON.stringify(A.reports)); }
       }
-      showSbar('✅ บันทึกลง Google Sheets สำเร็จ!', 'ok');
+      showSbar(`✅ บันทึกลง Google Sheets สำเร็จ! (แถวที่ ${js.data?.row || '?'})`, 'ok');
       toast('✅ บันทึกสำเร็จ');
     } else {
-      showSbar('❌ Sheets ตอบกลับข้อผิดพลาด', 'err');
+      showSbar('❌ Script แจ้ง Error: ' + (js.error || JSON.stringify(js)), 'err');
     }
   } catch(e) {
-    showSbar('⚠️ บันทึก Local แล้ว แต่เชื่อม Sheets ไม่ได้', 'err');
+    showSbar('⚠️ บันทึก Local แล้ว แต่เชื่อม Sheets ไม่ได้: ' + e.message, 'err');
   }
 }
 
@@ -1712,11 +1717,22 @@ async function testConn() {
   if (!url) { toast('กรุณากรอก Script URL ก่อน แล้วกด "บันทึกการตั้งค่า"'); return; }
   showSbar('กำลังทดสอบ...', 'load');
   try {
-    const r = await fetch(url + '?action=ping');
-    const js = await r.json();
-    showSbar(js.ok ? '✅ เชื่อมต่อสำเร็จ! Sheets พร้อมใช้งาน' : '⚠️ ได้รับ Response แต่อาจมีปัญหา', js.ok?'ok':'err');
+    const r = await fetch(url + '?action=ping&sheetName=' + encodeURIComponent(document.getElementById('s_sheetName').value || 'Reports'));
+    const text = await r.text();
+    // ถ้า response เป็น HTML แสดงว่า script error
+    if (text.trim().startsWith('<')) {
+      showSbar('❌ Script ตอบกลับเป็น HTML — กรุณา Deploy ใหม่ (New Deployment)', 'err');
+      return;
+    }
+    const js = JSON.parse(text);
+    if (js.ok && js.data) {
+      const d = js.data;
+      showSbar(`✅ เชื่อมต่อสำเร็จ! Spreadsheet: "${d.spreadsheetName}" | Tab: "${d.sheetName}"`, 'ok');
+    } else {
+      showSbar('⚠️ Script ตอบกลับแต่มีปัญหา: ' + (js.error || JSON.stringify(js)), 'err');
+    }
   } catch(e) {
-    showSbar('❌ เชื่อมต่อไม่ได้ — ตรวจสอบ URL และการ Deploy ว่าเปิด Access: Anyone', 'err');
+    showSbar('❌ เชื่อมต่อไม่ได้: ' + e.message, 'err');
   }
 }
 
@@ -1774,7 +1790,7 @@ async function syncAllToSheets() {
   const btn = document.getElementById('syncBtn');
   btn.disabled = true;
   btn.textContent = '⏳ กำลัง Sync...';
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, firstErr = '';
 
   for (const rep of reports) {
     try {
@@ -1782,10 +1798,18 @@ async function syncAllToSheets() {
         method: 'POST',
         body: JSON.stringify({ action: 'save', data: rep, sheetName: A.sheetName || 'Reports' })
       });
-      const js = await r.json();
-      if (js.ok) ok++; else fail++;
+      const text = await r.text();
+      if (text.trim().startsWith('<')) {
+        fail++;
+        if (!firstErr) firstErr = 'Script ตอบกลับเป็น HTML — กรุณา Deploy ใหม่ (New Deployment) และ copy URL ใหม่';
+        break; // หยุดทันที ไม่ต้อง retry
+      }
+      const js = JSON.parse(text);
+      if (js.ok) ok++;
+      else { fail++; if (!firstErr) firstErr = js.error || JSON.stringify(js); }
     } catch(e) {
       fail++;
+      if (!firstErr) firstErr = e.message;
     }
   }
 
@@ -1793,10 +1817,13 @@ async function syncAllToSheets() {
   btn.textContent = '☁️ Sync ข้อมูล Local → Google Sheets';
 
   const okMsg = fail === 0
-    ? `<div style="color:var(--green);padding:10px;background:var(--green-light);border-radius:6px">✅ Sync สำเร็จ ${ok}/${reports.length} รายการ — ตรวจสอบใน Google Sheets ได้เลย</div>`
-    : `<div style="color:var(--orange);padding:10px;background:var(--orange-light);border-radius:6px">⚠️ สำเร็จ ${ok} รายการ / ล้มเหลว ${fail} รายการ — ตรวจสอบ Script URL และ Deploy อีกครั้ง</div>`;
+    ? `<div style="color:var(--green);padding:10px;background:var(--green-light);border-radius:6px;font-size:13px">✅ Sync สำเร็จ ${ok}/${reports.length} รายการ — ตรวจสอบใน Google Sheets ได้เลย</div>`
+    : `<div style="color:var(--red);padding:10px;background:var(--red-light);border-radius:6px;font-size:13px">
+        ❌ สำเร็จ ${ok} / ล้มเหลว ${fail} รายการ<br>
+        <strong>สาเหตุ:</strong> ${firstErr}<br><br>
+        <strong>วิธีแก้:</strong> ไปที่ Apps Script → Deploy → New Deployment → copy URL ใหม่มาวาง
+       </div>`;
   document.getElementById('syncResult').innerHTML = okMsg;
-  // อัพเดต bar ใน history tab ด้วย
   const histRes = document.getElementById('histSyncResult');
   if (histRes) histRes.innerHTML = okMsg;
   if (fail === 0) {
