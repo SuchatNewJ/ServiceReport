@@ -177,8 +177,30 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 }
 
 /* =============================================
-   RESPONSIVE — MOBILE (≤640px)
+   SIGNATURE PAD
    ============================================= */
+.sig-wrap{border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;position:relative}
+.sig-wrap canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.sig-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#f4f3ef;border-top:1px solid var(--border)}
+.sig-bar span{font-size:11px;color:var(--muted)}
+.sig-clear{border:none;background:none;color:var(--red);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;padding:3px 8px;border-radius:4px}
+.sig-clear:hover{background:var(--red-light)}
+.sig-label{text-align:center;font-size:12px;font-weight:600;color:var(--muted);margin-top:6px}
+
+/* =============================================
+   PHOTO UPLOAD
+   ============================================= */
+.photo-section{display:flex;flex-direction:column;gap:10px}
+.photo-area{border:1.5px dashed var(--border);border-radius:8px;padding:14px;transition:.15s}
+.photo-area:hover{border-color:var(--red)}
+.photo-area-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:10px}
+.photo-thumb{position:relative;border-radius:6px;overflow:hidden;aspect-ratio:1;background:#f4f3ef}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .del-photo{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.photo-add-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 10px;border:1.5px dashed var(--border);border-radius:6px;cursor:pointer;background:none;font-family:'Sarabun',sans-serif;font-size:12px;color:var(--muted);width:100%;transition:.15s}
+.photo-add-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-light)}
+.photo-add-btn input[type=file]{display:none}
 @media (max-width:640px){
   /* Header */
   .app-header{ padding:0 .9rem; height:auto; min-height:52px; flex-wrap:wrap; }
@@ -495,6 +517,74 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
     </div>
   </div>
 
+  <!-- 5. ลายเซ็น -->
+  <div class="card">
+    <div class="card-head"><span class="num">5</span> ลายเซ็น (Signatures)</div>
+    <div class="card-body">
+      <div class="grid2">
+        <div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>ชื่อเจ้าหน้าที่ (Technician)</label>
+            <select id="f_techName" onchange="onTechChange()">
+              <option value="">-- เลือกชื่อช่าง --</option>
+            </select>
+          </div>
+          <div class="sig-wrap">
+            <canvas id="sigTech" height="130"></canvas>
+            <div class="sig-bar">
+              <span>✍️ เซ็นชื่อในกล่องนี้</span>
+              <button class="sig-clear" onclick="clearSig('sigTech')">ล้าง</button>
+            </div>
+          </div>
+          <div class="sig-label">เจ้าหน้าที่ (Technician)</div>
+        </div>
+        <div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>ชื่อลูกค้า (Customer)</label>
+            <input type="text" id="f_custSigName" placeholder="ชื่อผู้รับมอบงาน">
+          </div>
+          <div class="sig-wrap">
+            <canvas id="sigCust" height="130"></canvas>
+            <div class="sig-bar">
+              <span>✍️ เซ็นชื่อในกล่องนี้</span>
+              <button class="sig-clear" onclick="clearSig('sigCust')">ล้าง</button>
+            </div>
+          </div>
+          <div class="sig-label">ลูกค้า (Customer)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. รูปภาพ -->
+  <div class="card">
+    <div class="card-head"><span class="num">6</span> รูปภาพหน้างาน (Photos) <span style="margin-left:auto;font-size:11px;opacity:.6;font-weight:400">รูปจะพิมพ์แยกหน้าใหม่</span></div>
+    <div class="card-body">
+      <div class="grid2">
+        <!-- ก่อนทำงาน -->
+        <div class="photo-area">
+          <div class="photo-area-title">📷 ก่อนทำงาน (Before)</div>
+          <div class="photo-grid" id="photoBeforeGrid"></div>
+          <label class="photo-add-btn">
+            <input type="file" accept="image/*" multiple onchange="addPhotos('before',this)">
+            <span style="font-size:22px">+</span>
+            <span>เพิ่มรูปภาพ / ถ่ายรูป</span>
+          </label>
+        </div>
+        <!-- หลังทำงาน -->
+        <div class="photo-area">
+          <div class="photo-area-title">✅ หลังทำงาน (After)</div>
+          <div class="photo-grid" id="photoAfterGrid"></div>
+          <label class="photo-add-btn">
+            <input type="file" accept="image/*" multiple onchange="addPhotos('after',this)">
+            <span style="font-size:22px">+</span>
+            <span>เพิ่มรูปภาพ / ถ่ายรูป</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="save-row">
     <button class="sbtn" onclick="previewReport()" style="padding:8px 16px;font-size:13px">👁 ดูตัวอย่าง / พิมพ์</button>
     <button class="hbtn red" onclick="saveReport()" style="font-size:14px;padding:8px 20px">💾 บันทึกรายงาน</button>
@@ -568,6 +658,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
   </div>
 
   <div class="card">
+    <div class="card-head"><span class="num" style="background:#555;font-size:9px">TC</span> รายชื่อช่าง (Technicians)</div>
+    <div class="card-body">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="s_newTech" placeholder="ชื่อช่างใหม่ เช่น นายสมชาย ใจดี" style="flex:1;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-family:'Sarabun',sans-serif;font-size:14px"
+          onkeydown="if(event.key==='Enter')addTechnician()">
+        <button class="sbtn" onclick="addTechnician()" style="white-space:nowrap;color:var(--red);border-color:var(--red-light)">+ เพิ่ม</button>
+      </div>
+      <div id="techTagList"></div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-head"><span class="num" style="background:#555;font-size:9px">CL</span> รายชื่อลูกค้า</div>
     <div class="card-body">
       <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -619,6 +721,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);fon
 let A = {
   scriptUrl: '',
   customers: ['บริษัท ไทยฮั้วยางพารา จำกัด (มหาชน)', 'โรงเลื่อยไม้ กาฬสินธุ์'],
+  technicians: [],
   templates: {},
   reports: [],
   editId: null,
@@ -731,6 +834,8 @@ function init() {
 
   renderCustDropdowns();
   renderCustTags();
+  renderTechDropdown();
+  renderTechTags();
   renderTmplTags();
   renderTmplDropdown();
   refreshDataStatus();
@@ -739,9 +844,145 @@ function init() {
   addERow('', '');
   addERow('', '');
   setStatus('ok');
+  initSigPads();
 }
 
 function persist() { localStorage.setItem('enzone_v3', JSON.stringify({...A, reports:[]})); }
+
+// =============================================
+// SIGNATURE PAD
+// =============================================
+const _sigs = {}; // { canvasId: { drawing, lastX, lastY, empty } }
+let _photoBefore = []; // array of base64
+let _photoAfter  = [];
+
+function initSigPads() {
+  ['sigTech','sigCust'].forEach(id => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    resizeSig(canvas);
+    _sigs[id] = { empty: true };
+
+    // Mouse
+    canvas.addEventListener('mousedown',  e => sigStart(id, e));
+    canvas.addEventListener('mousemove',  e => sigDraw(id, e));
+    canvas.addEventListener('mouseup',    () => sigEnd(id));
+    canvas.addEventListener('mouseleave', () => sigEnd(id));
+    // Touch
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); sigStart(id, e.touches[0]); }, {passive:false});
+    canvas.addEventListener('touchmove',  e => { e.preventDefault(); sigDraw(id, e.touches[0]); }, {passive:false});
+    canvas.addEventListener('touchend',   () => sigEnd(id));
+  });
+  window.addEventListener('resize', () => {
+    ['sigTech','sigCust'].forEach(id => {
+      const c = document.getElementById(id);
+      if (c) { const d = getSigData(id); resizeSig(c); if(d) restoreSig(id,d); }
+    });
+  });
+}
+
+function resizeSig(canvas) {
+  const r = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = r.width  * dpr;
+  canvas.height = 130 * dpr;
+  canvas.style.height = '130px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+
+function getSigXY(canvas, e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left), y: (e.clientY - r.top) };
+}
+
+function sigStart(id, e) {
+  const c = document.getElementById(id);
+  const {x,y} = getSigXY(c, e);
+  _sigs[id].drawing = true;
+  _sigs[id].lastX = x;
+  _sigs[id].lastY = y;
+}
+
+function sigDraw(id, e) {
+  if (!_sigs[id]?.drawing) return;
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  const {x,y} = getSigXY(c, e);
+  ctx.beginPath();
+  ctx.moveTo(_sigs[id].lastX, _sigs[id].lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  _sigs[id].lastX = x;
+  _sigs[id].lastY = y;
+  _sigs[id].empty = false;
+}
+
+function sigEnd(id) { if (_sigs[id]) _sigs[id].drawing = false; }
+
+function clearSig(id) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  if (_sigs[id]) _sigs[id].empty = true;
+}
+
+function getSigData(id) {
+  const c = document.getElementById(id);
+  if (!c || _sigs[id]?.empty) return null;
+  return c.toDataURL('image/png');
+}
+
+function restoreSig(id, dataUrl) {
+  if (!dataUrl) return;
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  const img = new Image();
+  img.onload = () => {
+    const dpr = window.devicePixelRatio || 1;
+    ctx.drawImage(img, 0, 0, c.width/dpr, 130);
+  };
+  img.src = dataUrl;
+  if (_sigs[id]) _sigs[id].empty = false;
+}
+
+// =============================================
+// PHOTO UPLOAD
+// =============================================
+function addPhotos(type, input) {
+  const files = Array.from(input.files);
+  const arr = type === 'before' ? _photoBefore : _photoAfter;
+  const gridId = type === 'before' ? 'photoBeforeGrid' : 'photoAfterGrid';
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      arr.push(e.target.result);
+      renderPhotoGrid(type);
+    };
+    reader.readAsDataURL(f);
+  });
+  input.value = '';
+}
+
+function renderPhotoGrid(type) {
+  const arr = type === 'before' ? _photoBefore : _photoAfter;
+  const grid = document.getElementById(type === 'before' ? 'photoBeforeGrid' : 'photoAfterGrid');
+  grid.innerHTML = arr.map((src, i) => `
+    <div class="photo-thumb">
+      <img src="${src}" alt="photo">
+      <button class="del-photo" onclick="removePhoto('${type}',${i})">×</button>
+    </div>`).join('');
+}
+
+function removePhoto(type, idx) {
+  if (type === 'before') _photoBefore.splice(idx, 1);
+  else _photoAfter.splice(idx, 1);
+  renderPhotoGrid(type);
+}
 
 // =============================================
 // TAB
@@ -885,6 +1126,67 @@ function setUnit(u) {
   A.timeUnit = u;
   document.getElementById('u_hr').className = u === 'hr' ? 'on' : '';
   document.getElementById('u_day').className = u === 'day' ? 'on' : '';
+}
+
+// =============================================
+// TECHNICIANS
+// =============================================
+function addTechnician() {
+  const v = document.getElementById('s_newTech').value.trim();
+  if (!v) return;
+  if (A.technicians.includes(v)) { toast('ชื่อนี้มีอยู่แล้ว'); return; }
+  A.technicians.push(v);
+  persist();
+  document.getElementById('s_newTech').value = '';
+  renderTechDropdown();
+  renderTechTags();
+  toast('✅ เพิ่มชื่อช่างแล้ว: ' + v);
+}
+
+function removeTechnician(i) {
+  if (!confirm('ลบชื่อช่าง "' + A.technicians[i] + '"?')) return;
+  A.technicians.splice(i, 1);
+  persist();
+  renderTechDropdown();
+  renderTechTags();
+}
+
+function renderTechTags() {
+  const el = document.getElementById('techTagList');
+  if (!el) return;
+  if (!A.technicians.length) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--muted)">ยังไม่มีรายชื่อช่าง — เพิ่มได้จากช่องด้านบน</p>';
+    return;
+  }
+  el.innerHTML = A.technicians.map((t, i) =>
+    `<span class="tag">👷 ${t}<button onclick="removeTechnician(${i})">×</button></span>`
+  ).join('');
+}
+
+function renderTechDropdown() {
+  const sel = document.getElementById('f_techName');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- เลือกชื่อช่าง --</option>' +
+    A.technicians.map(t => `<option value="${esc(t)}">${t}</option>`).join('') +
+    '<option value="__new__">✏️ เพิ่มชื่อช่างใหม่...</option>';
+  if (cur && cur !== '__new__') sel.value = cur;
+}
+
+function onTechChange() {
+  if (document.getElementById('f_techName').value !== '__new__') return;
+  const n = prompt('ชื่อช่างใหม่:');
+  if (n && n.trim()) {
+    if (!A.technicians.includes(n.trim())) {
+      A.technicians.push(n.trim());
+      persist();
+      renderTechDropdown();
+      renderTechTags();
+    }
+    document.getElementById('f_techName').value = n.trim();
+  } else {
+    document.getElementById('f_techName').value = '';
+  }
 }
 
 // =============================================
@@ -1034,6 +1336,12 @@ function getForm() {
     timeAmt: document.getElementById('f_timeAmt').value,
     timeUnit: A.timeUnit,
     note: document.getElementById('f_note').value,
+    techName: document.getElementById('f_techName').value,
+    custSigName: document.getElementById('f_custSigName').value,
+    sigTech: getSigData('sigTech'),
+    sigCust: getSigData('sigCust'),
+    photoBefore: _photoBefore,
+    photoAfter:  _photoAfter,
   };
 }
 
@@ -1057,8 +1365,17 @@ function fillForm(d) {
   document.getElementById('f_timeAmt').value = d.timeAmt || '';
   setUnit(d.timeUnit || 'hr');
   document.getElementById('f_note').value = d.note || '';
-  document.getElementById('f_savedAt').value = d.savedAt || '';
-  // equipment
+  document.getElementById('f_techName').value    = d.techName    || '';
+  document.getElementById('f_custSigName').value = d.custSigName || '';
+  // Signatures
+  clearSig('sigTech'); clearSig('sigCust');
+  if (d.sigTech) restoreSig('sigTech', d.sigTech);
+  if (d.sigCust) restoreSig('sigCust', d.sigCust);
+  // Photos
+  _photoBefore = Array.isArray(d.photoBefore) ? [...d.photoBefore] : [];
+  _photoAfter  = Array.isArray(d.photoAfter)  ? [...d.photoAfter]  : [];
+  renderPhotoGrid('before');
+  renderPhotoGrid('after');
   document.getElementById('equipBody').innerHTML = '';
   const eq = typeof d.equipment === 'string' ? parseJ(d.equipment, []) : (d.equipment || []);
   if (eq.length) eq.forEach(r => addERow(r.name, r.qty || '1', r.sn));
@@ -1067,10 +1384,12 @@ function fillForm(d) {
 
 function clearForm() {
   A.editId = null;
-  ['f_no','f_contact','f_symptom','f_cause','f_fix','f_parts','f_reason','f_note','f_savedAt'].forEach(id => {
+  ['f_no','f_contact','f_symptom','f_cause','f_fix','f_parts','f_reason','f_note','f_savedAt',
+   'f_custSigName'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('f_cust').value = '';
+  document.getElementById('f_techName').value = '';
   document.getElementById('f_workers').value = '2';
   document.getElementById('f_timeAmt').value = '';
   setServiceTypes('');
@@ -1078,6 +1397,9 @@ function clearForm() {
   setUnit('hr');
   document.getElementById('equipBody').innerHTML = '';
   addERow(); addERow();
+  clearSig('sigTech'); clearSig('sigCust');
+  _photoBefore = []; _photoAfter = [];
+  renderPhotoGrid('before'); renderPhotoGrid('after');
   setTodayDate();
   autoNo();
 }
@@ -1344,16 +1666,33 @@ function buildDoc(d) {
 
     <div class="doc-sig">
       <div class="doc-sig-box">
-        <p style="margin-bottom:36px">---------------------------------------------</p>
-        <p>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+        ${d.sigTech ? `<img src="${d.sigTech}" style="height:60px;display:block;margin-bottom:4px">` : '<div style="height:60px"></div>'}
+        <p>( ${d.techName || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</p>
         <p style="margin-top:4px">เจ้าหน้าที่ (Technician)</p>
       </div>
       <div class="doc-sig-box">
-        <p style="margin-bottom:36px">---------------------------------------------</p>
-        <p>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+        ${d.sigCust ? `<img src="${d.sigCust}" style="height:60px;display:block;margin-bottom:4px">` : '<div style="height:60px"></div>'}
+        <p>( ${d.custSigName || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'} )</p>
         <p style="margin-top:4px">ลูกค้า (Customer)</p>
       </div>
     </div>
+
+    ${(d.photoBefore?.length || d.photoAfter?.length) ? `
+    <div style="page-break-before:always;padding-top:10px">
+      <div class="doc-sec">รูปภาพหน้างาน (Photos)</div>
+
+      ${d.photoBefore?.length ? `
+      <p style="font-size:12px;font-weight:700;color:#555;margin:10px 0 8px">📷 ก่อนทำงาน (Before) — ${d.photoBefore.length} รูป</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+        ${d.photoBefore.map(src=>`<img src="${src}" style="width:100%;border-radius:5px;border:1px solid #ddd;object-fit:cover;aspect-ratio:4/3">`).join('')}
+      </div>` : ''}
+
+      ${d.photoAfter?.length ? `
+      <p style="font-size:12px;font-weight:700;color:#555;margin:10px 0 8px">✅ หลังทำงาน (After) — ${d.photoAfter.length} รูป</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${d.photoAfter.map(src=>`<img src="${src}" style="width:100%;border-radius:5px;border:1px solid #ddd;object-fit:cover;aspect-ratio:4/3">`).join('')}
+      </div>` : ''}
+    </div>` : ''}
   </div>`;
 }
 
